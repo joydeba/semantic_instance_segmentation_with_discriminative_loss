@@ -12,6 +12,15 @@ from .utils import ImageUtilities as IU
 
 class SegDataset(Dataset):
     """Dataset Reader"""
+    # DATA_DIR = os.path.abspath(os.path.join(__file__, os.path.pardir,
+    #                                         os.path.pardir, os.path.pardir))
+    # SEMANTIC_ANN_DIR = os.path.join(DATA_DIR, 'processed', 'CVPPP',
+    #                                 'semantic-annotations')
+    # INSTANCE_ANN_DIR = os.path.join(DATA_DIR, 'processed', 'CVPPP',
+    #                                 'instance-annotations')
+    # IMG_DIR = os.path.join(DATA_DIR, 'raw', 'CVPPP', 'CVPPP2017_LSC_training',
+    #                        'training', 'A1')
+    # OUT_DIR = os.path.join(DATA_DIR, 'processed', 'CVPPP', 'lmdb')
 
     def __init__(self):
 
@@ -54,13 +63,7 @@ class SegDataset(Dataset):
 
 class AlignCollate(object):
 
-    def __init__(self, mode, n_classes, max_n_objects, mean, std, image_height,
-                 image_width, random_hor_flipping=True,
-                 random_ver_flipping=True, random_transposing=True,
-                 random_90x_rotation=True, random_rotation=True,
-                 random_color_jittering=True, random_grayscaling=True,
-                 random_channel_swapping=True, random_gamma=True,
-                 random_resolution=True):
+    def __init__(self, mode, n_classes, max_n_objects, mean, std, image_height,image_width):
 
         self._mode = mode
         self.n_classes = n_classes
@@ -73,16 +76,12 @@ class AlignCollate(object):
         self.image_height = image_height
         self.image_width = image_width
 
-        self.random_horizontal_flipping = random_hor_flipping
-        self.random_vertical_flipping = random_ver_flipping
-        self.random_transposing =  random_transposing
-        self.random_90x_rotation = random_90x_rotation
-        self.random_rotation = random_rotation
-        self.random_color_jittering = random_color_jittering
-        self.random_grayscaling = random_grayscaling
-        self.random_channel_swapping = random_channel_swapping
-        self.random_gamma = random_gamma
-        self.random_resolution = random_resolution
+        self.random_horizontal_flipping = True
+        self.random_vertical_flipping = True
+        self.random_transposing =  True
+        self.random_90x_rotation = True
+        self.random_rotation = True
+
 
         if self._mode == 'training':
             if self.random_horizontal_flipping:
@@ -98,17 +97,7 @@ class AlignCollate(object):
             if self.random_90x_rotation:
                 self.image_rotator_90x = IU.image_random_90x_rotator()
                 self.annotation_rotator_90x = IU.image_random_90x_rotator(Image.NEAREST)
-            if self.random_color_jittering:
-                self.color_jitter = IU.image_random_color_jitter(
-                    brightness=0.4, contrast=0.4, saturation=0.4, hue=0.2)
-            if self.random_grayscaling:
-                self.grayscaler = IU.image_random_grayscaler(p=0.3)
-            if self.random_channel_swapping:
-                self.channel_swapper = IU.image_random_channel_swapper(p=0.5)
-            if self.random_gamma:
-                self.gamma_adjuster = IU.image_random_gamma([0.7, 1.3], gain=1)
-            if self.random_resolution:
-                self.resolution_degrader = IU.image_random_resolution([0.7, 1.3])
+
 
             self.img_resizer = IU.image_resizer(self.image_height,
                                                 self.image_width)
@@ -131,8 +120,7 @@ class AlignCollate(object):
             instance_annotation = list(instance_annotation.transpose(2, 0, 1))
             n_objects = len(instance_annotation)
 
-            if self.random_resolution:
-                image = self.resolution_degrader(image)
+
 
             if self.random_horizontal_flipping:
                 is_flip = random.random() < 0.5
@@ -143,8 +131,7 @@ class AlignCollate(object):
                     _ann = self.horizontal_flipper(_ann, is_flip)
                     instance_annotation[i] = _ann
 
-                semantic_annotation = self.horizontal_flipper(
-                    semantic_annotation, is_flip)
+                semantic_annotation = self.horizontal_flipper(semantic_annotation, is_flip)
 
             if self.random_vertical_flipping:
                 is_flip = random.random() < 0.5
@@ -155,8 +142,7 @@ class AlignCollate(object):
                     _ann = self.vertical_flipper(_ann, is_flip)
                     instance_annotation[i] = _ann
 
-                semantic_annotation = self.vertical_flipper(
-                    semantic_annotation, is_flip)
+                semantic_annotation = self.vertical_flipper(semantic_annotation, is_flip)
 
             if self.random_transposing:
                 is_trans = random.random() < 0.5
@@ -167,8 +153,7 @@ class AlignCollate(object):
                     _ann = self.transposer(_ann, is_trans)
                     instance_annotation[i] = _ann
 
-                semantic_annotation = self.transposer(
-                    semantic_annotation, is_trans)
+                semantic_annotation = self.transposer(semantic_annotation, is_trans)
 
             if self.random_90x_rotation:
                 rot_angle = np.random.choice([0, 90, 180, 270])
@@ -180,8 +165,7 @@ class AlignCollate(object):
                     _ann = self.annotation_rotator_90x(_ann, rot_angle, rot_expand)
                     instance_annotation[i] = _ann
 
-                semantic_annotation = self.annotation_rotator_90x(semantic_annotation,
-                                                                  rot_angle, rot_expand)
+                semantic_annotation = self.annotation_rotator_90x(semantic_annotation,rot_angle, rot_expand)
 
             if self.random_rotation:
                 rot_angle = int(np.random.rand() * 10)
@@ -196,23 +180,10 @@ class AlignCollate(object):
                     _ann = self.annotation_rotator(_ann, rot_angle, rot_expand)
                     instance_annotation[i] = _ann
 
-                semantic_annotation = self.annotation_rotator(semantic_annotation,
-                                                              rot_angle, rot_expand)
+                semantic_annotation = self.annotation_rotator(semantic_annotation,rot_angle, rot_expand)
 
-            if self.random_color_jittering:
-                image = self.color_jitter(image)
 
-            if self.random_gamma:
-                image = self.gamma_adjuster(image)
-
-            if self.random_channel_swapping:
-                image = self.channel_swapper(image)
-
-            if self.random_grayscaling:
-                image = self.grayscaler(image)
-
-            instance_annotation = np.array(
-                instance_annotation).transpose(1, 2, 0)
+            instance_annotation = np.array(instance_annotation).transpose(1, 2, 0)
 
         # Resize Images
         image = self.img_resizer(image)
@@ -233,21 +204,17 @@ class AlignCollate(object):
 
         # Fill Instance Annotations with zeros
         for i in range(self.max_n_objects - n_objects):
-            zero = np.zeros((ann_height, ann_width),
-                            dtype=np.uint8)
+            zero = np.zeros((ann_height, ann_width),dtype=np.uint8)
             zero = Image.fromarray(zero)
             zero = self.ann_resizer(zero)
             zero = np.array(zero)
             instance_annotation_resized.append(zero.copy())
 
-        instance_annotation_resized = np.stack(
-            instance_annotation_resized, axis=0)
-        instance_annotation_resized = instance_annotation_resized.transpose(
-            1, 2, 0)
+        instance_annotation_resized = np.stack(instance_annotation_resized, axis=0)
+        instance_annotation_resized = instance_annotation_resized.transpose(1, 2, 0)
 
         # Resize Semantic Anntations
-        semantic_annotation = self.ann_resizer(
-            Image.fromarray(semantic_annotation))
+        semantic_annotation = self.ann_resizer(Image.fromarray(semantic_annotation))
         semantic_annotation = np.array(semantic_annotation)
 
         # Image Normalization
@@ -255,22 +222,27 @@ class AlignCollate(object):
 
         return (image, semantic_annotation, instance_annotation_resized)
 
-    def __call__(self, batch):
-        images, semantic_annotations, instance_annotations, \
-            n_objects = zip(*batch)
+    def __call__(self, batch):  #객체 호출시 실행
+        # (image, s_a, i_a) 형태로 있는걸 image 끼리, s_a 끼리, i_n끼리 묶는
+        images, semantic_annotations, instance_annotations, n_objects = zip(*batch)
 
         images = list(images)
         semantic_annotations = list(semantic_annotations)
         instance_annotations = list(instance_annotations)
 
-        # max_n_objects = np.max(n_objects)
-
         bs = len(images)
         for i in range(bs):
+
+            #augmentation 어어
+            self.random_horizontal_flipping = np.random.choice([True, False])
+            self.random_horizontal_flipping = np.random.choice([True, False])
+            self.random_vertical_flipping = np.random.choice([True, False])
+            self.random_transposing = np.random.choice([True, False])
+            self.random_90x_rotation = np.random.choice([True, False])
+            self.random_rotation = np.random.choice([True, False])
+
             image, semantic_annotation, instance_annotation = \
-                self.__preprocess(images[i],
-                                  semantic_annotations[i],
-                                  instance_annotations[i])
+                self.__preprocess(images[i],semantic_annotations[i],instance_annotations[i])
 
             images[i] = image
             semantic_annotations[i] = semantic_annotation
@@ -278,12 +250,9 @@ class AlignCollate(object):
 
         images = torch.stack(images)
 
-        instance_annotations = np.array(
-            instance_annotations,
-            dtype='int')  # bs, h, w, n_ins
+        instance_annotations = np.array(instance_annotations,dtype='int')  # bs, h, w, n_ins
 
-        semantic_annotations = np.array(
-            semantic_annotations, dtype='int')  # bs, h, w
+        semantic_annotations = np.array(semantic_annotations, dtype='int')  # bs, h, w
         semantic_annotations_one_hot = np.eye(self.n_classes, dtype='int')
         semantic_annotations_one_hot = \
             semantic_annotations_one_hot[semantic_annotations.flatten()].reshape(
@@ -293,15 +262,12 @@ class AlignCollate(object):
         instance_annotations = torch.LongTensor(instance_annotations)
         instance_annotations = instance_annotations.permute(0, 3, 1, 2)
 
-        semantic_annotations_one_hot = torch.LongTensor(
-            semantic_annotations_one_hot)
-        semantic_annotations_one_hot = semantic_annotations_one_hot.permute(
-            0, 3, 1, 2)
+        semantic_annotations_one_hot = torch.LongTensor(semantic_annotations_one_hot)
+        semantic_annotations_one_hot = semantic_annotations_one_hot.permute(0, 3, 1, 2)
 
         n_objects = torch.IntTensor(n_objects)
 
-        return (images, semantic_annotations_one_hot, instance_annotations,
-                n_objects)
+        return (images, semantic_annotations_one_hot, instance_annotations,n_objects)
 
 #직접 실행시켰을 때만 실행되기를 원하는 코
 if __name__ == '__main__':
@@ -325,8 +291,7 @@ if __name__ == '__main__':
                                          collate_fn=ac)
     loader = iter(loader)
 
-    images, semantic_annotations, instance_annotations, \
-        n_objects = loader.next()
+    images, semantic_annotations, instance_annotations, n_objects = loader.next()
 
     print(images.size())
     print(semantic_annotations.size())
