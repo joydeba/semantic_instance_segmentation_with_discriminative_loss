@@ -1,1 +1,5 @@
 .idea
+processed/CVPPP/lmdb/training-lmdb/data.mdb
+processed/CVPPP/lmdb/training-lmdb/lock.mdb
+processed/CVPPP/lmdb/validation-lmdb/data.mdb
+processed/CVPPP/lmdb/validation-lmdb/lock.mdb
