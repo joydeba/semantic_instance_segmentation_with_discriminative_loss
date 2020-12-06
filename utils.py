@@ -2,7 +2,7 @@ from PIL import Image
 import torchvision.transforms as transforms
 from io import StringIO
 
-from .preprocess import RandomResizedCrop, RandomHorizontalFlip, \
+from preprocess import RandomResizedCrop, RandomHorizontalFlip, \
     RandomVerticalFlip, RandomTranspose, RandomRotate, \
     RandomChannelSwap, RandomGamma, RandomResolution
 

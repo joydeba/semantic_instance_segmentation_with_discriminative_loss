@@ -7,7 +7,7 @@ import sys
 import os
 import numpy as np
 
-from .utils import ImageUtilities as IU
+from utils import ImageUtilities as IU
 
 
 class SegDataset(Dataset):
@@ -26,7 +26,7 @@ class SegDataset(Dataset):
 
         self.semantic_ann_base_path = 'processed/CVPPP/semantic-annotations'
         self.instance_ann_base_path = 'processed/CVPPP/instance-annotations'
-        self.img_base_path = 'data/raw/CVPPP/CVPPP2017_LSC_training/training/A1'
+        self.img_base_path = 'training/A1'
         self.n_samples = len(os.listdir(self.semantic_ann_base_path))
 
     def __load_data(self, index):
