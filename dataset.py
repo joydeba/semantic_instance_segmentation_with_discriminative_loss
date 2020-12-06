@@ -24,9 +24,9 @@ class SegDataset(Dataset):
 
     def __init__(self):
 
-        self.semantic_ann_base_path = '/home/lab/Documents/식물/Code/instance-segmentation-pytorch/data/processed/CVPPP/semantic-annotations'
-        self.instance_ann_base_path = '/home/lab/Documents/식물/Code/instance-segmentation-pytorch/data/processed/CVPPP/instance-annotations'
-        self.img_base_path = '/home/lab/Documents/식물/Code/instance-segmentation-pytorch/data/raw/CVPPP/CVPPP2017_LSC_training/training/A1'
+        self.semantic_ann_base_path = 'processed/CVPPP/semantic-annotations'
+        self.instance_ann_base_path = 'processed/CVPPP/instance-annotations'
+        self.img_base_path = 'data/raw/CVPPP/CVPPP2017_LSC_training/training/A1'
         self.n_samples = len(os.listdir(self.semantic_ann_base_path))
 
     def __load_data(self, index):
